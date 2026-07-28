@@ -1,5 +1,6 @@
 (function () {
   "use strict";
+  const { U, Store } = window.Mello;
 
   function enhanceOrderDetails() {
     const modal = document.querySelector("#modalRoot .modal");
@@ -52,10 +53,32 @@
     });
   }
 
+  function showApprovedBudgets() {
+    document.querySelectorAll("[data-budget-edit]").forEach(button => {
+      const row = button.closest("tr");
+      const approved = [...row.querySelectorAll(".badge")].some(badge => badge.textContent.trim() === "Aprovado");
+      row.hidden = !approved;
+    });
+  }
+
+  function enhanceDashboard() {
+    const metrics = document.querySelector(".metrics");
+    const dashboardVisible = location.hash.replace("#", "") === "dashboard" || !location.hash;
+    if (!metrics || !dashboardVisible || metrics.querySelector("[data-approved-budgets]")) return;
+    const approved = Store.all("budgets").filter(budget => budget.status === "Aprovado");
+    const total = approved.reduce((sum, budget) => sum + U.num(budget.total), 0);
+    const card = document.createElement("button");
+    card.className = "metric metric-link";
+    card.dataset.approvedBudgets = "";
+    card.innerHTML = `<small>Orçamentos aprovados</small><strong>${approved.length}</strong><em>${U.money(total)}</em>`;
+    metrics.append(card);
+  }
+
   function enhance() {
     enhanceOrderDetails();
     enhanceOrderRows();
     enhanceBudgets();
+    enhanceDashboard();
     syncBottomNavigation();
   }
 
@@ -68,6 +91,10 @@
     }
     const budget = event.target.closest("[data-row-budget]");
     if (budget) window.Mello.Budgets.edit(null, budget.dataset.rowBudget);
+    if (event.target.closest("[data-approved-budgets]")) {
+      window.Mello.App.route("orcamentos");
+      setTimeout(showApprovedBudgets, 0);
+    }
     if (event.target.closest(".mobile-bottom-nav [data-route]")) setTimeout(syncBottomNavigation, 0);
   });
 
