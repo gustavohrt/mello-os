@@ -29,10 +29,32 @@
   };
   U.confirm = (message, onConfirm) => U.modal({ title: "Confirmar ação", body: `<p>${U.esc(message)}</p>`, saveText: "Confirmar", onSave: () => onConfirm() });
   U.formData = root => Object.fromEntries(new FormData(root.querySelector("form")).entries());
-  U.fileBase64 = (file, max = 1000000) => new Promise((resolve, reject) => {
+  U.fileBase64 = (file, max = 15000000) => new Promise((resolve, reject) => {
     if (!file.type.startsWith("image/")) return reject(new Error("Selecione apenas imagens."));
-    if (file.size > max) return reject(new Error("A imagem deve ter no máximo 1 MB."));
-    const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file);
+    if (file.size > max) return reject(new Error("A imagem deve ter no máximo 15 MB."));
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = () => {
+      const image = new Image();
+      image.onerror = () => reject(new Error("Não foi possível processar esta imagem."));
+      image.onload = () => {
+        const maxDimension = 2200;
+        const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(image.width * scale));
+        canvas.height = Math.max(1, Math.round(image.height * scale));
+        canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
+        let quality = .88;
+        let data = canvas.toDataURL("image/jpeg", quality);
+        while (data.length > 3500000 && quality > .55) {
+          quality -= .08;
+          data = canvas.toDataURL("image/jpeg", quality);
+        }
+        resolve(data);
+      };
+      image.src = reader.result;
+    };
+    reader.readAsDataURL(file);
   });
   U.pageHead = (title, text, actions = "") => `<header class="page-head"><div><h1>${U.esc(title)}</h1><p>${U.esc(text)}</p></div><div class="actions">${actions}</div></header>`;
   U.empty = (title, text) => `<div class="empty"><b>${U.esc(title)}</b>${U.esc(text)}</div>`;
