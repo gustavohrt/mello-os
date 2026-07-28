@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Mello OS — Gestão de Assistência Técnica</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="loader" class="loader"><span></span><b>Mello OS</b></div>
+  <div id="app" class="app">
+    <aside class="sidebar">
+      <div class="brand"><div class="brand-mark">M</div><div><strong>Mello OS</strong><small>Assistência técnica</small></div></div>
+      <nav id="nav"></nav>
+      <div class="sidebar-foot"><button class="nav-item" data-action="collapse">☰ <span>Recolher menu</span></button></div>
+    </aside>
+    <main class="workspace">
+      <header class="topbar">
+        <button class="icon-btn mobile-menu" data-action="collapse" aria-label="Menu">☰</button>
+        <label class="global-search"><span>⌕</span><input id="globalSearch" placeholder="Pesquisar clientes, OS ou serial…"><kbd>Ctrl F</kbd></label>
+        <div class="top-actions">
+          <div class="clock"><strong id="clockTime"></strong><small id="clockDate"></small></div>
+          <button class="icon-btn" data-action="theme" aria-label="Alternar tema">◐</button>
+          <button class="btn primary" data-action="new-order">＋ Nova ordem</button>
+          <button class="avatar" data-route="configuracoes">MO</button>
+        </div>
+      </header>
+      <section id="view" class="view" aria-live="polite"></section>
+    </main>
+  </div>
+  <div id="modalRoot"></div>
+  <div id="toastRoot" class="toasts"></div>
+  <input id="fileInput" type="file" accept=".json" hidden>
+  <script src="utils.js"></script>
+  <script src="supabase.js"></script>
+  <script src="storage.js"></script>
+  <script src="clientes.js"></script>
+  <script src="ordens.js"></script>
+  <script src="orcamentos.js"></script>
+  <script src="relatorios.js"></script>
+  <script src="backup.js"></script>
+  <script src="pdf.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
