@@ -2,13 +2,13 @@
   "use strict";
   const { U, Store } = window.Mello;
   const statuses = ["Recebida","Em análise","Aguardando orçamento","Aguardando aprovação","Aguardando peça","Em manutenção","Em testes","Pronta","Entregue"];
-  const checks = [["powersOn","Equipamento liga"],["displayWorks","Display funcionando"],["wifi","Wi‑Fi"],["usb","USB"],["printheadPresent","Cabeçote presente"],["cartridgesPresent","Cartuchos presentes"],["tankFull","Tanque cheio"],["scratches","Riscos"],["breaks","Quebras"],["oxidation","Oxidação"],["leakage","Vazamento"],["accessories","Acessórios"]];
+  const checks = [["printheadWorks","Cabeçote funcionando"],["powersOn","Impressora ligando"],["colorFailure","Falhando cores"],["bulkContaminated","Cores do bulk contaminadas"],["displayWorks","Display funciona"],["airIntake","Entrada de ar"],["leakage","Vazamento"],["other","Outra ocorrência"]];
   function orderForm(o) {
     const clients = Store.all("clients"), ck = o?.checklist || {};
     return `<form class="form-grid" id="orderForm"><input type="hidden" name="id" value="${U.esc(o?.id || "")}">
       <div class="field"><label>Cliente *</label><select name="clientId" required><option value="">Selecione</option><option value="__new__">＋ Cadastrar novo cliente nesta OS</option>${clients.map(c=>`<option value="${c.id}" ${o?.clientId===c.id?"selected":""}>${U.esc(c.name)}</option>`).join("")}</select></div>
       <div class="field"><label>Status</label><select name="status">${statuses.map(s=>`<option ${o?.status===s?"selected":""}>${s}</option>`).join("")}</select></div>
-      <div class="field full" id="inlineClient" hidden><div class="card"><div class="card-head"><h2>Novo cliente</h2><span class="badge">Será salvo junto com a OS</span></div><div class="form-grid"><div class="field"><label>Nome *</label><input name="newClientName"></div><div class="field"><label>CPF</label><input name="newClientCpf"></div><div class="field"><label>Telefone</label><input name="newClientPhone"></div><div class="field"><label>WhatsApp</label><input name="newClientWhatsapp"></div><div class="field"><label>E-mail</label><input name="newClientEmail" type="email"></div><div class="field"><label>Endereço</label><input name="newClientAddress"></div><div class="field full"><label>Observações do cliente</label><textarea name="newClientNotes"></textarea></div></div></div></div>
+      <div class="field full" id="inlineClient" hidden><div class="card"><div class="card-head"><h2>Novo cliente</h2><span class="badge">Será salvo junto com a OS</span></div><div class="form-grid"><div class="field"><label>Nome / Razão social *</label><input name="newClientName"></div><div class="field"><label>CPF</label><input name="newClientCpf"></div><div class="field"><label>CNPJ</label><div class="input-action"><input name="newClientCnpj"><button type="button" class="btn small" data-lookup-cnpj data-prefix="newClient">Buscar</button></div></div><div class="field"><label>CEP</label><div class="input-action"><input name="newClientCep"><button type="button" class="btn small" data-lookup-cep data-prefix="newClient">Buscar</button></div></div><div class="field"><label>Telefone</label><input name="newClientPhone"></div><div class="field"><label>WhatsApp</label><input name="newClientWhatsapp"></div><div class="field"><label>E-mail</label><input name="newClientEmail" type="email"></div><div class="field"><label>Endereço</label><input name="newClientAddress"></div><div class="field full"><label>Observações do cliente</label><textarea name="newClientNotes"></textarea></div></div></div></div>
       <div class="field"><label>Marca *</label><input name="brand" required value="${U.esc(o?.brand||"")}"></div><div class="field"><label>Modelo *</label><input name="model" required value="${U.esc(o?.model||"")}"></div>
       <div class="field"><label>Número de série</label><input name="serial" value="${U.esc(o?.serial||"")}"></div><div class="field"><label>Tipo de tinta</label><input name="inkType" value="${U.esc(o?.inkType||"")}"></div>
       <div class="field"><label>Recebido por</label><input name="receivedBy" value="${U.esc(o?.receivedBy||"")}"></div><div class="field"><label>Técnico responsável</label><input name="technician" value="${U.esc(o?.technician||"")}"></div>
@@ -27,7 +27,7 @@
   function serviceRow(s={}){return `<div class="toolbar order-service-row"><input class="field-search service-description" placeholder="Descrição do serviço" value="${U.esc(s.description||"")}"><input class="service-value" type="number" min="0" step=".01" placeholder="Valor" value="${s.value||0}" style="width:130px"><button type="button" class="btn small danger" data-remove-service>×</button></div>`}
   function setupOrderForm(root){
     const select=root.querySelector("[name=clientId]"),inline=root.querySelector("#inlineClient"),labor=root.querySelector("[name=laborValue]");
-    const toggle=()=>{inline.hidden=select.value!=="__new__";root.querySelector("[name=newClientName]").required=select.value==="__new__"};select.onchange=toggle;toggle();
+    const toggle=()=>{inline.hidden=select.value!=="__new__";root.querySelector("[name=newClientName]").required=select.value==="__new__"};select.onchange=toggle;toggle();window.Mello.Clients?.setupLookups(root);
     const bindRow=row=>{row.querySelector("[data-remove-service]").onclick=()=>{row.remove();sum()};row.querySelector(".service-value").oninput=sum};
     const sum=()=>{const total=[...root.querySelectorAll(".service-value")].reduce((a,x)=>a+U.num(x.value),0);if(root.querySelectorAll(".order-service-row").length)labor.value=total};
     root.querySelectorAll(".order-service-row").forEach(bindRow);
@@ -41,7 +41,7 @@
     let clientId=d.clientId;
     if(clientId==="__new__"){
       if(!d.newClientName.trim())throw new Error("Informe o nome do novo cliente.");
-      const client=Store.save("clients",{id:U.uuid(),name:d.newClientName.trim(),cpf:d.newClientCpf,phone:d.newClientPhone,whatsapp:d.newClientWhatsapp,email:d.newClientEmail,address:d.newClientAddress,notes:d.newClientNotes});
+      const client=Store.save("clients",{id:U.uuid(),name:d.newClientName.trim(),cpf:d.newClientCpf,cnpj:d.newClientCnpj,cep:d.newClientCep,phone:d.newClientPhone,whatsapp:d.newClientWhatsapp,email:d.newClientEmail,address:d.newClientAddress,notes:d.newClientNotes});
       Store.activity(`Cliente cadastrado pela OS: ${client.name}`,"client",client.id);clientId=client.id;
     }
     const services=[...root.querySelectorAll(".order-service-row")].map(x=>({id:U.uuid(),description:x.querySelector(".service-description").value.trim(),value:Math.max(0,U.num(x.querySelector(".service-value").value))})).filter(x=>x.description);
