@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="light dark">
   <title>Mello OS — Gestão de Assistência Técnica</title>
   <link rel="icon" href="logo_mello_informatica.jpg">
-  <link rel="stylesheet" href="style.css?v=20260728-5">
+  <link rel="stylesheet" href="style.css?v=20260728-6">
 </head>
 <body>
   <div id="loader" class="loader"><span></span><img class="loader-logo" src="logo_mello_informatica.jpg" alt="Mello Informática"></div>
@@ -30,6 +30,11 @@
       <section id="view" class="view" aria-live="polite"></section>
     </main>
   </div>
+  <nav class="mobile-bottom-nav" aria-label="Navegação principal">
+    <button data-route="dashboard" aria-label="Abrir Dashboard"><span>⌂</span><small>Dashboard</small></button>
+    <button data-route="ordens" aria-label="Abrir Ordens de Serviço"><span>▣</span><small>OS</small></button>
+    <button data-route="orcamentos" aria-label="Abrir Orçamentos"><span>▤</span><small>Orçamentos</small></button>
+  </nav>
   <div id="modalRoot"></div>
   <div id="toastRoot" class="toasts"></div>
   <input id="fileInput" type="file" accept=".json" hidden>
@@ -45,5 +50,6 @@
   <script src="pdf.js?v=20260728-3"></script>
   <script src="branding.js?v=20260728-3"></script>
   <script src="app.js?v=20260728-3"></script>
+  <script src="fluxo-mobile.js?v=20260728-6"></script>
 </body>
 </html>
