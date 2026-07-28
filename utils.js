@@ -18,7 +18,7 @@
   };
   U.modal = ({ title, body, wide = false, saveText = "Salvar", onSave, onOpen }) => {
     const root = document.getElementById("modalRoot");
-    root.innerHTML = `<div class="modal-backdrop"><section class="modal ${wide ? "wide" : ""}" role="dialog" aria-modal="true"><header class="modal-head"><h2>${U.esc(title)}</h2><button class="icon-btn" data-close aria-label="Fechar">×</button></header><div class="modal-body">${body}</div><footer class="modal-foot"><button class="btn" data-close>Cancelar</button>${onSave ? `<button class="btn primary" data-save>${U.esc(saveText)}</button>` : ""}</footer></section></div>`;
+    root.innerHTML = `<div class="modal-backdrop"><section class="modal ${wide ? "wide" : ""}" role="dialog" aria-modal="true"><header class="modal-head"><button class="btn modal-back" data-close aria-label="Voltar para a tela anterior">← Voltar</button><h2>${U.esc(title)}</h2></header><div class="modal-body">${body}</div><footer class="modal-foot"><button class="btn" data-close>Cancelar</button>${onSave ? `<button class="btn primary" data-save>${U.esc(saveText)}</button>` : ""}</footer></section></div>`;
     const close = () => root.innerHTML = "";
     root.querySelectorAll("[data-close]").forEach(b => b.onclick = close);
     root.querySelector(".modal-backdrop").onclick = e => { if (e.target.classList.contains("modal-backdrop")) close(); };

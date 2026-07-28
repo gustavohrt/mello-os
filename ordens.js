@@ -6,7 +6,7 @@
   function orderForm(o) {
     const clients = Store.all("clients"), ck = o?.checklist || {};
     return `<form class="form-grid" id="orderForm"><input type="hidden" name="id" value="${U.esc(o?.id || "")}">
-      <div class="field"><label>Cliente *</label><select name="clientId" required><option value="">Selecione</option><option value="__new__">＋ Cadastrar novo cliente nesta OS</option>${clients.map(c=>`<option value="${c.id}" ${o?.clientId===c.id?"selected":""}>${U.esc(c.name)}</option>`).join("")}</select></div>
+      <div class="field"><label>Cliente *</label><input type="search" data-client-search placeholder="Localizar por nome, telefone, CPF ou CNPJ" autocomplete="off"><select name="clientId" required><option value="">Selecione um cliente cadastrado</option><option value="__new__">＋ Cadastrar novo cliente nesta OS</option>${clients.map(c=>`<option value="${c.id}" ${o?.clientId===c.id?"selected":""}>${U.esc(c.name)}${c.phone?` · ${U.esc(c.phone)}`:""}</option>`).join("")}</select><small class="muted" data-client-search-result>${clients.length} cliente(s) disponível(is)</small></div>
       <div class="field"><label>Status</label><select name="status">${statuses.map(s=>`<option ${o?.status===s?"selected":""}>${s}</option>`).join("")}</select></div>
       <div class="field full" id="inlineClient" hidden><div class="card"><div class="card-head"><h2>Novo cliente</h2><span class="badge">Será salvo junto com a OS</span></div><div class="form-grid"><div class="field"><label>Nome / Razão social *</label><input name="newClientName"></div><div class="field"><label>CPF</label><input name="newClientCpf"></div><div class="field"><label>CNPJ</label><div class="input-action"><input name="newClientCnpj"><button type="button" class="btn small" data-lookup-cnpj data-prefix="newClient">Buscar</button></div></div><div class="field"><label>CEP</label><div class="input-action"><input name="newClientCep"><button type="button" class="btn small" data-lookup-cep data-prefix="newClient">Buscar</button></div></div><div class="field"><label>Telefone</label><input name="newClientPhone"></div><div class="field"><label>WhatsApp</label><input name="newClientWhatsapp"></div><div class="field"><label>E-mail</label><input name="newClientEmail" type="email"></div><div class="field"><label>Endereço</label><input name="newClientAddress"></div><div class="field full"><label>Observações do cliente</label><textarea name="newClientNotes"></textarea></div></div></div></div>
       <div class="field"><label>Marca *</label><input name="brand" required value="${U.esc(o?.brand||"")}"></div><div class="field"><label>Modelo *</label><input name="model" required value="${U.esc(o?.model||"")}"></div>
@@ -27,6 +27,14 @@
   function serviceRow(s={}){return `<div class="toolbar order-service-row"><input class="field-search service-description" placeholder="Descrição do serviço" value="${U.esc(s.description||"")}"><input class="service-value" type="number" min="0" step=".01" placeholder="Valor" value="${s.value||0}" style="width:130px"><button type="button" class="btn small danger" data-remove-service>×</button></div>`}
   function setupOrderForm(root){
     const select=root.querySelector("[name=clientId]"),inline=root.querySelector("#inlineClient"),labor=root.querySelector("[name=laborValue]");
+    const clientSearch=root.querySelector("[data-client-search]"),clientResult=root.querySelector("[data-client-search-result]"),clients=Store.all("clients"),selectedId=select.value;
+    const renderClients=query=>{
+      const normalized=U.normalize(query),matches=clients.filter(c=>!normalized||U.normalize([c.name,c.phone,c.whatsapp,c.cpf,c.cnpj].join(" ")).includes(normalized));
+      select.innerHTML=`<option value="">Selecione um cliente cadastrado</option><option value="__new__">＋ Cadastrar novo cliente nesta OS</option>${matches.map(c=>`<option value="${c.id}">${U.esc(c.name)}${c.phone?` · ${U.esc(c.phone)}`:""}</option>`).join("")}`;
+      if(matches.some(c=>c.id===selectedId))select.value=selectedId;
+      clientResult.textContent=`${matches.length} cliente(s) encontrado(s)`;
+    };
+    clientSearch.oninput=U.debounce(e=>renderClients(e.target.value),120);
     const toggle=()=>{inline.hidden=select.value!=="__new__";root.querySelector("[name=newClientName]").required=select.value==="__new__"};select.onchange=toggle;toggle();window.Mello.Clients?.setupLookups(root);
     const bindRow=row=>{row.querySelector("[data-remove-service]").onclick=()=>{row.remove();sum()};row.querySelector(".service-value").oninput=sum};
     const sum=()=>{const total=[...root.querySelectorAll(".service-value")].reduce((a,x)=>a+U.num(x.value),0);if(root.querySelectorAll(".order-service-row").length)labor.value=total};
