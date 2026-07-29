@@ -19,6 +19,7 @@
       <div class="field full"><label>Serviços *</label><textarea class="services-free-text" name="serviceText" required placeholder="Digite cada serviço em uma linha. Use Enter, espaços e linhas em branco como preferir.">${U.esc(previousText(budget))}</textarea><small class="muted">Campo livre para personalizar sua lista usando o teclado.</small></div>
       <div class="field"><label>Valor</label><input name="baseValue" type="number" min="0" step=".01" value="${baseValue}"></div>
       <div class="field"><label>Desconto</label><input name="discount" type="number" min="0" step=".01" value="${budget?.discount || 0}"></div>
+      <div class="field full"><label>Garantia do orçamento</label><input name="warranty" placeholder="Ex.: 30 dias somente para o serviço realizado" value="${U.esc(budget?.warranty || "")}"><small class="muted">Escreva a garantia exatamente como deseja que apareça no PDF.</small></div>
       <div class="field full"><div class="simple-budget-total"><span>Valor final</span><strong data-simple-total>${U.money(Math.max(0, baseValue - U.num(budget?.discount)))}</strong></div></div>
     </form>`;
   }
@@ -47,7 +48,7 @@
         const discount = Math.max(0, U.num(data.discount));
         const total = Math.max(0, baseValue - discount);
         const services = [{ id: U.uuid(), catalogId: "", description: serviceText, quantity: 1, unitPrice: baseValue, subtotal: baseValue }];
-        const item = { ...budget, id: budget?.id || U.uuid(), number: budget?.number || "ORC-" + String(Date.now()).slice(-7), orderId: data.orderId, status: data.status, serviceText, baseValue, services, parts: [], discount, total, warranty: budget?.warranty || Store.snapshot().settings.defaultWarranty, notes: budget?.notes || "" };
+        const item = { ...budget, id: budget?.id || U.uuid(), number: budget?.number || "ORC-" + String(Date.now()).slice(-7), orderId: data.orderId, status: data.status, serviceText, baseValue, services, parts: [], discount, total, warranty: data.warranty.trim(), notes: budget?.notes || "" };
         Store.save("budgets", item);
         const order = Store.get("orders", data.orderId);
         if (order) {
