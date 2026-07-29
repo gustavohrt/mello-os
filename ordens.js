@@ -6,9 +6,9 @@
   function orderForm(o) {
     const clients = Store.all("clients"), ck = o?.checklist || {};
     return `<form class="form-grid" id="orderForm"><input type="hidden" name="id" value="${U.esc(o?.id || "")}"><div class="field full mobile-return-row"><button type="button" class="btn return-to-list" data-close>← Voltar para Ordens</button></div>
-      <div class="field"><label>Cliente *</label><input type="search" data-client-search placeholder="Localizar por nome, telefone, CPF ou CNPJ" autocomplete="off"><select name="clientId" required><option value="">Selecione um cliente cadastrado</option><option value="__new__">＋ Cadastrar novo cliente nesta OS</option>${clients.map(c=>`<option value="${c.id}" ${o?.clientId===c.id?"selected":""}>${U.esc(c.name)}${c.phone?` · ${U.esc(c.phone)}`:""}</option>`).join("")}</select><small class="muted" data-client-search-result>${clients.length} cliente(s) disponível(is)</small></div>
+      <div class="field full client-picker"><label>Cliente *</label><div class="client-picker-actions"><input type="search" data-client-search placeholder="Digite nome, telefone, CPF ou CNPJ" autocomplete="off"><button type="button" class="btn" data-new-client>＋ Cadastrar novo cliente</button></div><input type="hidden" name="clientId" value="${U.esc(o?.clientId||"")}"><div class="client-selected" data-client-selected hidden></div><div class="client-results" data-client-results hidden></div><small class="muted" data-client-search-result>Digite pelo menos 2 caracteres para localizar um cliente.</small></div>
       <div class="field"><label>Status</label><select name="status">${statuses.map(s=>`<option ${o?.status===s?"selected":""}>${s}</option>`).join("")}</select></div>
-      <div class="field full" id="inlineClient" hidden><div class="card"><div class="card-head"><h2>Novo cliente</h2><span class="badge">Será salvo junto com a OS</span></div><div class="form-grid"><div class="field"><label>Nome / Razão social *</label><input name="newClientName"></div><div class="field"><label>CPF</label><input name="newClientCpf"></div><div class="field"><label>CNPJ</label><div class="input-action"><input name="newClientCnpj"><button type="button" class="btn small" data-lookup-cnpj data-prefix="newClient">Buscar</button></div></div><div class="field"><label>CEP</label><div class="input-action"><input name="newClientCep"><button type="button" class="btn small" data-lookup-cep data-prefix="newClient">Buscar</button></div></div><div class="field"><label>Telefone</label><input name="newClientPhone"></div><div class="field"><label>WhatsApp</label><input name="newClientWhatsapp"></div><div class="field"><label>E-mail</label><input name="newClientEmail" type="email"></div><div class="field"><label>Endereço</label><input name="newClientAddress"></div><div class="field full"><label>Observações do cliente</label><textarea name="newClientNotes"></textarea></div></div></div></div>
+      <div class="field full" id="inlineClient" hidden><div class="card"><div class="card-head"><h2>Novo cliente</h2><div class="actions"><span class="badge">Será salvo junto com a OS</span><button type="button" class="btn small" data-cancel-new-client>Cancelar</button></div></div><div class="form-grid"><div class="field"><label>Nome / Razão social *</label><input name="newClientName"></div><div class="field"><label>CPF</label><input name="newClientCpf"></div><div class="field"><label>CNPJ</label><div class="input-action"><input name="newClientCnpj"><button type="button" class="btn small" data-lookup-cnpj data-prefix="newClient">Buscar</button></div></div><div class="field"><label>CEP</label><div class="input-action"><input name="newClientCep"><button type="button" class="btn small" data-lookup-cep data-prefix="newClient">Buscar</button></div></div><div class="field"><label>Telefone</label><input name="newClientPhone"></div><div class="field"><label>WhatsApp</label><input name="newClientWhatsapp"></div><div class="field"><label>E-mail</label><input name="newClientEmail" type="email"></div><div class="field"><label>Endereço</label><input name="newClientAddress"></div><div class="field full"><label>Observações do cliente</label><textarea name="newClientNotes"></textarea></div></div></div></div>
       <div class="field"><label>Marca *</label><input name="brand" required value="${U.esc(o?.brand||"")}"></div><div class="field"><label>Modelo *</label><input name="model" required value="${U.esc(o?.model||"")}"></div>
       <div class="field"><label>Número de série</label><input name="serial" value="${U.esc(o?.serial||"")}"></div><div class="field"><label>Tipo de tinta</label><input name="inkType" value="${U.esc(o?.inkType||"")}"></div>
       <div class="field"><label>Quantidade de páginas</label><input name="pageCount" inputmode="numeric" placeholder="Ex.: 25.430" value="${U.esc(o?.pageCount||"")}"></div><div class="field"><label>Data da primeira impressão do equipamento</label><input name="firstPrintInfo" placeholder="Informação livre" value="${U.esc(o?.firstPrintInfo||"")}"></div>
@@ -25,15 +25,27 @@
   function serviceRow(s={}){return `<div class="toolbar order-service-row"><input class="field-search service-description" placeholder="Descrição do serviço" value="${U.esc(s.description||"")}"><input class="service-value" type="number" min="0" step=".01" placeholder="Valor" value="${s.value||0}" style="width:130px"><button type="button" class="btn small danger" data-remove-service>×</button></div>`}
   function setupOrderForm(root){
     const select=root.querySelector("[name=clientId]"),inline=root.querySelector("#inlineClient");
-    const clientSearch=root.querySelector("[data-client-search]"),clientResult=root.querySelector("[data-client-search-result]"),clients=Store.all("clients"),selectedId=select.value;
+    const clientSearch=root.querySelector("[data-client-search]"),clientResult=root.querySelector("[data-client-search-result]"),results=root.querySelector("[data-client-results]"),selected=root.querySelector("[data-client-selected]"),clients=Store.all("clients");
+    const showSelected=()=>{
+      const client=clients.find(c=>c.id===select.value);
+      selected.hidden=!client;
+      selected.innerHTML=client?`<span><b>${U.esc(client.name)}</b>${client.phone?` · ${U.esc(client.phone)}`:""}</span><button type="button" class="btn small" data-clear-client>Trocar</button>`:"";
+      selected.querySelector("[data-clear-client]")?.addEventListener("click",()=>{select.value="";selected.hidden=true;clientSearch.value="";clientSearch.hidden=false;clientSearch.focus();clientResult.textContent="Digite pelo menos 2 caracteres para localizar um cliente."});
+      clientSearch.hidden=!!client;
+    };
     const renderClients=query=>{
-      const normalized=U.normalize(query),matches=clients.filter(c=>!normalized||U.normalize([c.name,c.phone,c.whatsapp,c.cpf,c.cnpj].join(" ")).includes(normalized));
-      select.innerHTML=`<option value="">Selecione um cliente cadastrado</option><option value="__new__">＋ Cadastrar novo cliente nesta OS</option>${matches.map(c=>`<option value="${c.id}">${U.esc(c.name)}${c.phone?` · ${U.esc(c.phone)}`:""}</option>`).join("")}`;
-      if(matches.some(c=>c.id===selectedId))select.value=selectedId;
-      clientResult.textContent=`${matches.length} cliente(s) encontrado(s)`;
+      const normalized=U.normalize(query.trim());
+      if(normalized.length<2){results.hidden=true;results.innerHTML="";clientResult.textContent="Digite pelo menos 2 caracteres para localizar um cliente.";return}
+      const matches=clients.filter(c=>U.normalize([c.name,c.phone,c.whatsapp,c.cpf,c.cnpj].join(" ")).includes(normalized)).slice(0,8);
+      results.innerHTML=matches.map(c=>`<button type="button" class="client-result" data-client-id="${c.id}"><b>${U.esc(c.name)}</b><small>${U.esc(c.phone||c.whatsapp||c.cpf||c.cnpj||"Cliente cadastrado")}</small></button>`).join("");
+      results.hidden=!matches.length;
+      clientResult.textContent=matches.length?`${matches.length} cliente(s) encontrado(s). Selecione um resultado.`:"Nenhum cliente encontrado. Você pode cadastrar um novo.";
+      results.querySelectorAll("[data-client-id]").forEach(button=>button.onclick=()=>{select.value=button.dataset.clientId;results.hidden=true;clientSearch.value="";showSelected()});
     };
     clientSearch.oninput=U.debounce(e=>renderClients(e.target.value),120);
-    const toggle=()=>{inline.hidden=select.value!=="__new__";root.querySelector("[name=newClientName]").required=select.value==="__new__"};select.onchange=toggle;toggle();window.Mello.Clients?.setupLookups(root);
+    root.querySelector("[data-new-client]").onclick=()=>{select.value="__new__";inline.hidden=false;results.hidden=true;clientSearch.value="";selected.hidden=true;clientSearch.hidden=true;root.querySelector("[name=newClientName]").required=true;root.querySelector("[name=newClientName]").focus()};
+    root.querySelector("[data-cancel-new-client]").onclick=()=>{select.value="";inline.hidden=true;root.querySelector("[name=newClientName]").required=false;clientSearch.hidden=false;clientSearch.focus();clientResult.textContent="Digite pelo menos 2 caracteres para localizar um cliente."};
+    showSelected();window.Mello.Clients?.setupLookups(root);
   }
   async function saveFrom(root, old) {
     const f = root.querySelector("form"); if (!f.reportValidity()) return false;
@@ -41,6 +53,7 @@
     checks.forEach(([k]) => checklist[k] = !!f.elements["check_"+k].checked);
     let photos = [...(old?.photos||[])]; for (const file of [...root.querySelector("#orderPhotos").files].slice(0,5-photos.length)) photos.push({id:U.uuid(),name:file.name,data:await U.fileBase64(file),createdAt:U.now()});
     let clientId=d.clientId;
+    if(!clientId)throw new Error("Localize e selecione um cliente ou cadastre um novo.");
     if(clientId==="__new__"){
       if(!d.newClientName.trim())throw new Error("Informe o nome do novo cliente.");
       const client=Store.save("clients",{id:U.uuid(),name:d.newClientName.trim(),cpf:d.newClientCpf,cnpj:d.newClientCnpj,cep:d.newClientCep,phone:d.newClientPhone,whatsapp:d.newClientWhatsapp,email:d.newClientEmail,address:d.newClientAddress,notes:d.newClientNotes});
