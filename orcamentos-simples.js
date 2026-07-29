@@ -20,6 +20,7 @@
       <div class="field"><label>Valor</label><input name="baseValue" type="number" min="0" step=".01" value="${baseValue}"></div>
       <div class="field"><label>Desconto</label><input name="discount" type="number" min="0" step=".01" value="${budget?.discount || 0}"></div>
       <div class="field full"><label>Garantia do orçamento</label><input name="warranty" placeholder="Ex.: 30 dias somente para o serviço realizado" value="${U.esc(budget?.warranty || "")}"><small class="muted">Escreva a garantia exatamente como deseja que apareça no PDF.</small></div>
+      <div class="field full"><label>Observações do orçamento</label><textarea name="notes" placeholder="Ex.: Orçamento válido por 10 dias. A demora na autorização pode causar novo entupimento do cabeçote.">${U.esc(budget?.notes || "")}</textarea><small class="muted">Este texto aparecerá no PDF exatamente como foi digitado.</small></div>
       <div class="field full"><div class="simple-budget-total"><span>Valor final</span><strong data-simple-total>${U.money(Math.max(0, baseValue - U.num(budget?.discount)))}</strong></div></div>
     </form>`;
   }
@@ -48,7 +49,7 @@
         const discount = Math.max(0, U.num(data.discount));
         const total = Math.max(0, baseValue - discount);
         const services = [{ id: U.uuid(), catalogId: "", description: serviceText, quantity: 1, unitPrice: baseValue, subtotal: baseValue }];
-        const item = { ...budget, id: budget?.id || U.uuid(), number: budget?.number || "ORC-" + String(Date.now()).slice(-7), orderId: data.orderId, status: data.status, serviceText, baseValue, services, parts: [], discount, total, warranty: data.warranty.trim(), notes: budget?.notes || "" };
+        const item = { ...budget, id: budget?.id || U.uuid(), number: budget?.number || "ORC-" + String(Date.now()).slice(-7), orderId: data.orderId, status: data.status, serviceText, baseValue, services, parts: [], discount, total, warranty: data.warranty.trim(), notes: data.notes.trim() };
         Store.save("budgets", item);
         const order = Store.get("orders", data.orderId);
         if (order) {
