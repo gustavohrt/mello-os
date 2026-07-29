@@ -105,7 +105,6 @@
       "Em manutenção": "maintenance",
       "Prontas": "ready",
       "Entregues": "delivered",
-      "Orçamentos pendentes": "budget-wait",
       "Orçamentos aprovados": "approved"
     };
     document.querySelectorAll(".metrics .metric").forEach(card => {
