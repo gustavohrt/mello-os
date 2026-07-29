@@ -15,8 +15,36 @@
     actions.prepend(back);
     const budget = actions.querySelector("[data-new-budget]");
     if (budget) {
-      budget.classList.add("primary");
-      budget.textContent = "＋ Criar orçamento desta OS";
+      budget.hidden = true;
+      budget.setAttribute("aria-hidden", "true");
+    }
+    const orderId = actions.querySelector("[data-edit-order]")?.dataset.editOrder;
+    const order = orderId && Store.get("orders", orderId);
+    const summary = actions.parentElement?.querySelector(".card.span-7");
+    if (order && summary && !summary.querySelector("[data-equipment-extra]")) {
+      const extra = document.createElement("div");
+      extra.dataset.equipmentExtra = "";
+      extra.className = "equipment-extra";
+      extra.innerHTML = `<p><b>Quantidade de páginas:</b> ${U.esc(order.pageCount || "Não informado")}</p><p><b>Primeira impressão:</b> ${U.esc(order.firstPrintInfo || "Não informado")}</p><p><b>Garantia:</b> ${U.esc(order.warrantyInfo || "Não informada")}</p>`;
+      summary.insertBefore(extra, summary.querySelector("h3"));
+    }
+    if (summary) {
+      [...summary.querySelectorAll("h3")].forEach(heading => {
+        const label = heading.textContent.trim();
+        if (label === "Serviços desta ordem" || label === "Financeiro") {
+          heading.nextElementSibling?.remove();
+          heading.remove();
+        }
+        if (label === "Orçamentos") {
+          let next = heading.nextElementSibling;
+          while (next && next.tagName !== "H3") {
+            const remove = next;
+            next = next.nextElementSibling;
+            remove.remove();
+          }
+          heading.remove();
+        }
+      });
     }
   }
 
@@ -24,14 +52,8 @@
     document.querySelectorAll("tr").forEach(row => {
       const open = row.querySelector("[data-order-view]");
       const cell = open?.closest("td");
-      if (!open || !cell || cell.querySelector("[data-row-budget]")) return;
-      const budget = document.createElement("button");
-      budget.type = "button";
-      budget.className = "btn small";
-      budget.dataset.rowBudget = open.dataset.orderView;
-      budget.textContent = "Orçamento";
-      cell.insertBefore(budget, cell.querySelector("[data-order-delete]"));
-      cell.insertBefore(document.createTextNode(" "), budget.nextSibling);
+      if (!open || !cell) return;
+      cell.querySelector("[data-row-budget]")?.remove();
     });
   }
 
@@ -74,11 +96,30 @@
     metrics.append(card);
   }
 
+  function styleDashboardMetrics() {
+    const tones = {
+      "Equipamentos": "neutral",
+      "Em análise": "analysis",
+      "Aguardando aprovação": "approval-wait",
+      "Aguardando peça": "part-wait",
+      "Em manutenção": "maintenance",
+      "Prontas": "ready",
+      "Entregues": "delivered",
+      "Orçamentos pendentes": "budget-wait",
+      "Orçamentos aprovados": "approved"
+    };
+    document.querySelectorAll(".metrics .metric").forEach(card => {
+      const label = card.querySelector("small")?.textContent.trim();
+      if (label && tones[label]) card.dataset.metricTone = tones[label];
+    });
+  }
+
   function enhance() {
     enhanceOrderDetails();
     enhanceOrderRows();
     enhanceBudgets();
     enhanceDashboard();
+    styleDashboardMetrics();
     syncBottomNavigation();
   }
 
@@ -89,8 +130,6 @@
       window.Mello.App.route("ordens");
       return;
     }
-    const budget = event.target.closest("[data-row-budget]");
-    if (budget) window.Mello.Budgets.edit(null, budget.dataset.rowBudget);
     if (event.target.closest("[data-approved-budgets]")) {
       window.Mello.App.route("orcamentos");
       setTimeout(showApprovedBudgets, 0);
