@@ -96,6 +96,16 @@
     metrics.append(card);
   }
 
+  function updateActiveEquipmentMetric() {
+    const card = [...document.querySelectorAll(".metrics .metric")].find(item => item.querySelector("small")?.textContent.trim() === "Equipamentos");
+    if (!card) return;
+    const activeTotal = Store.all("orders").filter(order => order.status !== "Entregue").length;
+    const value = card.querySelector("strong");
+    const caption = card.querySelector("em");
+    if (value) value.textContent = activeTotal;
+    if (caption) caption.textContent = "Em atendimento";
+  }
+
   function styleDashboardMetrics() {
     const tones = {
       "Equipamentos": "neutral",
@@ -118,6 +128,7 @@
     enhanceOrderRows();
     enhanceBudgets();
     enhanceDashboard();
+    updateActiveEquipmentMetric();
     styleDashboardMetrics();
     syncBottomNavigation();
   }
