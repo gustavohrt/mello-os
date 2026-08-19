@@ -102,8 +102,8 @@
     const activeTotal = Store.all("orders").filter(order => order.status !== "Entregue").length;
     const value = card.querySelector("strong");
     const caption = card.querySelector("em");
-    if (value) value.textContent = activeTotal;
-    if (caption) caption.textContent = "Em atendimento";
+    if (value && value.textContent !== String(activeTotal)) value.textContent = activeTotal;
+    if (caption && caption.textContent !== "Em atendimento") caption.textContent = "Em atendimento";
   }
 
   function styleDashboardMetrics() {
